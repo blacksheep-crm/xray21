@@ -178,14 +178,14 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
                     ch = pr.GetColumnHelper();
                     cm = ch.GetColMap();
                     fn = c.GetName();
-                    for (col in cm){
-                        if (cm[col] == fn){
+                    for (col in cm) {
+                        if (cm[col] == fn) {
                             cn = col;
                         }
                     }
                     li = "div#jqgh_" + ph + "_" + cn;
                     thelabel = gh.find(li);
-                    if (thelabel.length == 1){
+                    if (thelabel.length == 1) {
                         retval = thelabel;
                     }
                 }
@@ -255,6 +255,7 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
             }
             bc["Fields"] = {};
             bc["Joins"] = {};
+            bc["Multi Value Links"] = {};
             cc = rrdata.GetChild(0).childArray;
             for (c in cc) {
                 if (cc[c].type == "Field") {
@@ -273,33 +274,56 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
                         bc["Joins"][fn][p] = props[p];
                     }
                 }
+                if (cc[c].type == "Multi Value Link") {
+                    props = cc[c].GetChildByType("Properties").propArray;
+                    fn = cc[c].GetChildByType("Properties").propArray["Name"];
+                    bc["Multi Value Links"][fn] = {};
+                    for (p in props) {
+                        bc["Multi Value Links"][fn][p] = props[p];
+                    }
+                }
             }
             //debugger;
             return retval;
+        };
+
+        BCRMUtils.prototype.GetBCData = function(bcn){
+            var ut = new SiebelAppFacade.BCRMUtils();
+            var rrdata,bcdata,bcd;
+            var cache = "BCRM_RR_CACHE_BC_" + bcn;
+            if (!sessionStorage.getItem(cache)) {
+                rrdata = ut.GetRRData("Buscomp", bcn);
+                bcdata = ut.ExtractBCData(rrdata);
+                bcd = bcdata["Business Component"];
+                sessionStorage.setItem(cache, JSON.stringify(bcd));
+            }
+            else {
+                bcd = JSON.parse(sessionStorage.getItem(cache));
+            }
+            return bcd;
         };
 
         //show physical metadata (table.column), requires BCRM RR Reader service
         BCRMUtils.prototype.ShowTableColumns = function (context) {
             var ut = new SiebelAppFacade.BCRMUtils();
             var pm = ut.ValidateContext(context);
-            var rrdata, bcdata;
-            var table, column, mvlink, mvfield, join;
+            var table, column, mvlink, mvfield, mvbc, join;
+            var bcd2;
             var bc, bcd, bcn, fm, cs, tp, fn, fd;
             var fdt, fln, fcl, frq;
             var nl;
             if (pm) {
                 bc = pm.Get("GetBusComp");
                 bcn = bc.GetName();
-                rrdata = ut.GetRRData("Buscomp", bcn);
-                bcdata = ut.ExtractBCData(rrdata);
-                bcd = bcdata["Business Component"];
+                //get RR CLOB Data from BCRM RR Reader service
+                bcd = ut.GetBCData(bcn);
                 fm = bc.GetFieldMap();
                 tp = ut.GetAppletType(pm);
                 //Form Applet treatment
                 if (tp == "form" || tp == "list") {
                     cs = pm.Get("GetControls");
                     for (c in cs) {
-                        if (cs.hasOwnProperty(c)) {
+                        if (cs.hasOwnProperty(c) && c != "CleanEmptyElements") {
                             fn = cs[c].GetFieldName();
                             if (fn != "") {
                                 fd = fm[fn];
@@ -316,7 +340,7 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
                                     //Join lookup
                                     if (bcd["Fields"][fn]["Join"] != "") {
                                         join = bcd["Fields"][fn]["Join"];
-                                        if (typeof (table = bcd["Joins"][join]) !== "undefined") {
+                                        if (typeof (bcd["Joins"][join]) !== "undefined") {
                                             table = bcd["Joins"][join]["Table"];
                                         }
                                         else {
@@ -332,9 +356,29 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
 
                                     //multi-value fields
                                     if (bcd["Fields"][fn]["Multi Valued"] == "Y") {
+                                        //debugger;
                                         mvlink = bcd["Fields"][fn]["Multi Value Link"];
                                         mvfield = bcd["Fields"][fn]["Dest Field"];
-                                        nl = "MVF: " + mvlink + "::" + mvfield;
+                                        if (typeof (bcd["Multi Value Links"][mvlink]) !== "undefined") {
+                                            mvbc = bcd["Multi Value Links"][mvlink]["Destination Business Component"];
+                                            bcd2 = ut.GetBCData(mvbc);
+                                            if (typeof (bcd2["Fields"][mvfield]) !== "undefined") {
+                                                table = bcd2["Table"];
+                                                column = bcd2["Fields"][mvfield]["Column"];
+                                                //Join lookup
+                                                if (bcd2["Fields"][mvfield]["Join"] != "") {
+                                                    join = bcd2["Fields"][mvfield]["Join"];
+                                                    if (typeof (bcd2["Joins"][join]) !== "undefined") {
+                                                        table = bcd2["Joins"][join]["Table"];
+                                                    }
+                                                    else {
+                                                        table = join;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        //nl = "MVF: " + mvbc + "::" + mvfield;
+                                        nl = "MVF: " + table + "." + column;
                                     }
                                 }
                                 //field not found in bcdata
