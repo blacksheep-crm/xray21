@@ -168,7 +168,7 @@
         var sDef;
         bcTypeRR.ClearToQuery();
         bcTypeRR.ActivateField(&quot;Complied Obj Def&quot;);
-        bcTypeRR.SetSearchSpec(&quot;Name&quot;, sTypeRR);
+        bcTypeRR.SetSearchExpr(&quot;[Name] LIKE \&quot;&quot; + sTypeRR + &quot;\&quot;&quot;);
         bcTypeRR.ExecuteQuery(ForwardOnly);
         if (bcTypeRR.FirstRecord()) {
             sDef = bcTypeRR.GetFieldValue(&quot;Complied Obj Def&quot;);
@@ -183,7 +183,7 @@
 }
 "
 			   SEQUENCE="3"
-			   UPDATED="01/01/2021 08:29:00"
+			   UPDATED="01/01/2021 10:23:12"
 			   UPDATED_BY="SADMIN"
 			   CREATED="12/31/2020 08:04:15"
 			   CREATED_BY="SADMIN">
