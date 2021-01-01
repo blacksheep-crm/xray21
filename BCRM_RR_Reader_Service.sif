@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<REPOSITORY
+   NAME="Siebel Repository"
+   UPDATED="09/04/2019 02:46:47"
+   UPDATED_BY="SADMIN"
+   CREATED="09/04/2019 02:04:45"
+   CREATED_BY="SADMIN"
+   FIO_PLACEHOLDER_FIO="TRUE">
+	<PROJECT
+	   ALLOW_OBJECT_LOCKING="Y"
+	   INACTIVE="N"
+	   LANGUAGE_LOCKED="ENU"
+	   LOCKED="N"
+	   NAME="00Phoenix"
+	   UI_FREEZE="N"
+	   UPDATED="04/10/2019 12:55:46"
+	   UPDATED_BY="SADMIN"
+	   CREATED="04/12/2012 14:08:49"
+	   CREATED_BY="SADMIN"
+	   FIO_PLACEHOLDER_FIO="TRUE">
+		<BUSINESS_SERVICE
+		   CACHE="N"
+		   CLASS="CSSService"
+		   EXTERNAL_USE="Y"
+		   HIDDEN="N"
+		   INACTIVE="N"
+		   NAME="BCRM RR Reader"
+		   SERVER_ENABLED="N"
+		   STATE_MANAGEMENT_TYPE="Stateful"
+		   WEB_SERVICE_ENABLED="N"
+		   UPDATED="12/31/2020 08:04:10"
+		   UPDATED_BY="SADMIN"
+		   CREATED="12/31/2020 08:04:10"
+		   CREATED_BY="SADMIN">
+			<BUSINESS_SERVICE_LOCALE
+			   APPLICATION_CODE="STD"
+			   DISPLAY_NAME="BCRM RR Reader"
+			   INACTIVE="N"
+			   LANGUAGE_CODE="ENU"
+			   NAME="ENU-STD"
+			   TRANSLATE="Y"
+			   UPDATED="12/31/2020 08:04:15"
+			   UPDATED_BY="SADMIN"
+			   CREATED="12/31/2020 08:04:15"
+			   CREATED_BY="SADMIN">
+			</BUSINESS_SERVICE_LOCALE>
+			<BUSINESS_SERVICE_SERVER_SCRIPT
+			   INACTIVE="N"
+			   NAME="(declarations)"
+			   PROGRAM_LANGUAGE="JS"
+			   SCRIPT="//Your public declarations go here...  
+"
+			   SEQUENCE="1"
+			   UPDATED="12/31/2020 08:04:15"
+			   UPDATED_BY="SADMIN"
+			   CREATED="12/31/2020 08:04:15"
+			   CREATED_BY="SADMIN">
+			</BUSINESS_SERVICE_SERVER_SCRIPT>
+			<BUSINESS_SERVICE_SERVER_SCRIPT
+			   INACTIVE="N"
+			   NAME="CleanAttributes"
+			   PROGRAM_LANGUAGE="JS"
+			   SCRIPT="function CleanAttributes(sAttr) {
+    try{
+        var tl = 0;
+        var ta = sAttr.split(&quot;*&quot;);
+        var t = &quot;&quot;;
+        var tt = [];
+        //everything before first * is the length of the next section
+        //8*Personal6*Person0*8*Owner Id0*0*
+        tl = parseInt(ta[0]);
+        for (var i = 1; i &lt; ta.length; i++) {
+            if (tl == 0) {
+                t = &quot;&quot;;
+            }
+            else {
+                t = ta[i].substring(0, tl);
+            }
+            tl = parseInt(ta[i].substring(tl, ta[i].length));
+            tt.push(t);
+        }
+    }
+    catch(e){
+        TheApplication().RaiseErrorText(&quot;Error in CleanAttributes: &quot; + e.toString());
+    }
+    return tt;
+}"
+			   SEQUENCE="2"
+			   UPDATED="01/01/2021 08:29:00"
+			   UPDATED_BY="SADMIN"
+			   CREATED="12/31/2020 08:04:15"
+			   CREATED_BY="SADMIN">
+			</BUSINESS_SERVICE_SERVER_SCRIPT>
+			<BUSINESS_SERVICE_SERVER_SCRIPT
+			   INACTIVE="N"
+			   NAME="GetRRData"
+			   PROGRAM_LANGUAGE="JS"
+			   SCRIPT="function GetRRData(Inputs, Outputs) {
+    try{
+        var psCache = TheApplication().NewPropertySet();
+        var psIn = TheApplication().NewPropertySet();
+        var psOut = TheApplication().NewPropertySet();
+        var psDef, cpsDef;
+        var psAttr = TheApplication().NewPropertySet();
+        var cpsAttr = TheApplication().NewPropertySet();
+        var cc, i;
+        var ccc = 0;
+        //var raw = TheApplication().NewPropertySet();
+        psIn.SetProperty(&quot;Object Type&quot;, Inputs.GetProperty(&quot;Object Type&quot;));
+        psIn.SetProperty(&quot;Object Name&quot;, Inputs.GetProperty(&quot;Object Name&quot;));
+        psOut = GetRawRRData(psIn);
+        cc = psOut.GetChildCount();
+
+        //root
+        psAttr = TranslateAttr(psOut, psCache);
+        psOut.AddChild(psAttr);
+        //end root
+
+        //level 1 children
+        if (cc &gt; 0) {
+            for (i = 0; i &lt; cc; i++) {
+                psAttr = TheApplication().NewPropertySet();
+                psDef = psOut.GetChild(i);
+                //let&apos;s ignore scripts, they cause trouble
+                if (psDef.GetType().indexOf(&quot;Script&quot;) == -1){
+                    ccc = psDef.GetChildCount();
+                    psAttr = TranslateAttr(psDef, psCache);
+                    psOut.GetChild(i).AddChild(psAttr);
+                    //level 2 children
+                    if (ccc &gt; 0) {
+                        for (var k = 0; k &lt; ccc; k++) {
+                            cpsAttr = TheApplication().NewPropertySet();
+                            cpsDef = psDef.GetChild(k);
+                            cpsAttr = TranslateAttr(cpsDef, psCache);
+                            psOut.GetChild(i).GetChild(k).AddChild(cpsAttr);
+                        }
+                    }//end level 2 children
+                }
+            }
+        }//end level 1 children
+
+        Outputs.AddChild(psOut);
+    }
+    catch(e){
+        TheApplication().RaiseErrorText(&quot;Error in GetRRData: &quot; + e.toString());
+    }
+}"
+			   SEQUENCE="4"
+			   UPDATED="01/01/2021 08:29:00"
+			   UPDATED_BY="SADMIN"
+			   CREATED="12/31/2020 08:04:15"
+			   CREATED_BY="SADMIN">
+			</BUSINESS_SERVICE_SERVER_SCRIPT>
+			<BUSINESS_SERVICE_SERVER_SCRIPT
+			   INACTIVE="N"
+			   NAME="GetRawRRData"
+			   PROGRAM_LANGUAGE="JS"
+			   SCRIPT="function GetRawRRData(Inputs) {
+    try{
+        var boTypeRR = TheApplication().GetBusObject(&quot;Runtime Repository Details&quot;);
+        var bsWFUtils = TheApplication().GetService(&quot;Workflow Utilities&quot;);
+        var psIn = TheApplication().NewPropertySet();
+        var psOut = TheApplication().NewPropertySet();
+        //use &quot;Type&quot; to get metameta
+        var bcTypeRR = boTypeRR.GetBusComp(&quot;Runtime Repository &quot; + Inputs.GetProperty(&quot;Object Type&quot;));
+        //eg. &quot;Field&quot; or &quot;Join&quot;...
+        var sTypeRR = Inputs.GetProperty(&quot;Object Name&quot;);
+        var sDef;
+        bcTypeRR.ClearToQuery();
+        bcTypeRR.ActivateField(&quot;Complied Obj Def&quot;);
+        bcTypeRR.SetSearchSpec(&quot;Name&quot;, sTypeRR);
+        bcTypeRR.ExecuteQuery(ForwardOnly);
+        if (bcTypeRR.FirstRecord()) {
+            sDef = bcTypeRR.GetFieldValue(&quot;Complied Obj Def&quot;);
+            psIn.SetValue(sDef);
+            bsWFUtils.InvokeMethod(&quot;TextToPropSet&quot;, psIn, psOut);
+        }
+    }
+    catch(e){
+        TheApplication().RaiseErrorText(&quot;Error in GetRawRRData: &quot; + e.toString());
+    }
+    return psOut;
+}
+"
+			   SEQUENCE="3"
+			   UPDATED="01/01/2021 08:29:00"
+			   UPDATED_BY="SADMIN"
+			   CREATED="12/31/2020 08:04:15"
+			   CREATED_BY="SADMIN">
+			</BUSINESS_SERVICE_SERVER_SCRIPT>
+			<BUSINESS_SERVICE_SERVER_SCRIPT
+			   INACTIVE="N"
+			   NAME="GetTypeRRFieldMap"
+			   PROGRAM_LANGUAGE="JS"
+			   SCRIPT="function GetTypeRRFieldMap(Inputs, Outputs) {
+    try{
+        var psIn = TheApplication().NewPropertySet();
+        var psOut = TheApplication().NewPropertySet();
+        psIn.SetProperty(&quot;Object Type&quot;, &quot;Type&quot;);
+        psIn.SetProperty(&quot;Object Name&quot;, Inputs.GetProperty(&quot;Object Type&quot;));
+        psOut = GetRawRRData(psIn);
+        var psDef, sAttr, arrAttr, ts;
+        var arTypeRR = [];
+        var arTypeNoCompRR = [];
+        var arTypeFilteredRR = [];
+        var cc = psOut.GetChildCount();
+        if (cc &gt; 0) {
+            for (var i = 0; i &lt; cc; i++) {
+                psDef = psOut.GetChild(i);
+                sAttr = psDef.GetProperty(&quot;ATTRS&quot;);
+                arrAttr = CleanAttributes(sAttr);
+                for (var j = 0; j &lt; arrAttr.length; j++) {
+                    ts = arrAttr[j];
+
+                    //Field name array
+                    if (j == 3) {
+                        arTypeRR.push(ts);
+                    }
+                    //array of &quot;No Compile&quot; flags
+                    if (j == 4) {
+                        arTypeNoCompRR.push(ts);
+                    }
+                }
+            }
+        }
+        //apply filter to get only compiled fields
+        for (var k = 0; k &lt; arTypeNoCompRR.length; k++) {
+            if (arTypeNoCompRR[k] == &quot;N&quot;) {
+                arTypeFilteredRR.push(arTypeRR[k]);
+            }
+        }
+        Outputs.SetProperty(&quot;RRFieldMap&quot;, arTypeFilteredRR.join(&quot;,&quot;));
+    }
+    catch(e){
+        TheApplication().RaiseErrorText(&quot;Error in GetTypeRRFieldMap: &quot; + e.toString());
+    }
+}"
+			   SEQUENCE="5"
+			   UPDATED="01/01/2021 08:29:00"
+			   UPDATED_BY="SADMIN"
+			   CREATED="12/31/2020 08:04:15"
+			   CREATED_BY="SADMIN">
+			</BUSINESS_SERVICE_SERVER_SCRIPT>
+			<BUSINESS_SERVICE_SERVER_SCRIPT
+			   INACTIVE="N"
+			   NAME="Service_PreInvokeMethod"
+			   PROGRAM_LANGUAGE="JS"
+			   SCRIPT="function Service_PreInvokeMethod (MethodName, Inputs, Outputs)
+{
+	try{
+		switch(MethodName){
+			case &quot;GetRRData&quot;: GetRRData(Inputs,Outputs);
+							  break;
+			default			: break;
+		}
+	}
+	catch(e){
+		Outputs.SetProperty(&quot;Error&quot;,e.toString());
+	}
+	return (CancelOperation);
+}"
+			   SEQUENCE="7"
+			   UPDATED="12/31/2020 08:04:15"
+			   UPDATED_BY="SADMIN"
+			   CREATED="12/31/2020 08:04:15"
+			   CREATED_BY="SADMIN">
+			</BUSINESS_SERVICE_SERVER_SCRIPT>
+			<BUSINESS_SERVICE_SERVER_SCRIPT
+			   INACTIVE="N"
+			   NAME="TranslateAttr"
+			   PROGRAM_LANGUAGE="JS"
+			   SCRIPT="function TranslateAttr(Inputs, psCache) {
+    try{
+        var psFilter = TheApplication().NewPropertySet();
+        var psIn = TheApplication().NewPropertySet();
+        var psAttr = TheApplication().NewPropertySet();
+        var psDef = Inputs;
+        var otype = &quot;&quot;;
+        var sAttr = psDef.GetProperty(&quot;ATTRS&quot;);
+        var arrAttr = CleanAttributes(sAttr);
+        var rrfmap = &quot;&quot;;
+        var arTypeFilteredRR;
+        var ts;
+        var fv = &quot;&quot;;
+
+        otype = psDef.GetType();
+        if (psCache.GetProperty(otype) == &quot;&quot;) {
+            psIn.SetProperty(&quot;Object Type&quot;, otype);
+            GetTypeRRFieldMap(psIn, psFilter);
+            rrfmap = psFilter.GetProperty(&quot;RRFieldMap&quot;);
+            psCache.SetProperty(otype, rrfmap);
+        }
+        else {
+            rrfmap = psCache.GetProperty(otype);
+        }
+
+        arTypeFilteredRR = rrfmap.split(&quot;,&quot;);
+
+        for (var h = 0; h &lt; arrAttr.length; h++) {
+            ts = arrAttr[h];
+            fv = arTypeFilteredRR[h];
+            psAttr.SetProperty(fv, ts);
+        }
+        psAttr.SetType(&quot;Properties&quot;);
+    }
+    catch(e){
+        TheApplication().RaiseErrorText(&quot;Error in TranslateAttr: &quot; + e.toString() + &quot;otype: &quot; + otype + &quot;***rrfmap: &quot; + rrfmap + &quot;***fv: &quot; + fv);
+    }
+    return psAttr;
+}"
+			   SEQUENCE="6"
+			   UPDATED="01/01/2021 08:29:00"
+			   UPDATED_BY="SADMIN"
+			   CREATED="12/31/2020 08:04:15"
+			   CREATED_BY="SADMIN">
+			</BUSINESS_SERVICE_SERVER_SCRIPT>
+		</BUSINESS_SERVICE>
+	</PROJECT>
+</REPOSITORY>
+
+
+
