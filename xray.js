@@ -1,8 +1,11 @@
 //EDUCATIONAL SAMPLE!!! DO NOT USE IN PRODUCTION!!!
 //copy below code to vanilla postload.js or custom PL
 
-//re-visiting the applet x-ray in 20.12
-//ahansal, 2020-12-30
+//re-visiting the applet x-ray in Siebel 20/21
+//Alexander Hansal, blacksheep IT consulting
+/*
+2020-01-03: fixed GetEl issue
+*/
 
 //we use postload, which is primitive but this is just a demo, so get over it... (talking to myself)
 BCRMPostload = function () {
@@ -134,7 +137,7 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
                 tp = ut.GetAppletType(pm);
                 pr = pm.GetRenderer();
                 ae = ut.GetAppletElem(pm);
-                if (tp == "form") {
+                if (tp == "form" && pr.GetUIWrapper(c)) {
                     //get control element
                     ce = pr.GetUIWrapper(c).GetEl();
                     inpname = c.GetInputName();
@@ -239,6 +242,7 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
             return data;
         };
 
+        //extract specified data (BC only as of now, but could expand)
         BCRMUtils.prototype.ExtractBCData = function (rrdata) {
             var retval = {};
             var bc;
@@ -283,13 +287,14 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
                     }
                 }
             }
-            //debugger;
             return retval;
         };
 
+        //wrapper to get "formatted" BC data
         BCRMUtils.prototype.GetBCData = function(bcn){
             var ut = new SiebelAppFacade.BCRMUtils();
             var rrdata,bcdata,bcd;
+            //use session storage as client-side cache to avoid multiple queries for the same object
             var cache = "BCRM_RR_CACHE_BC_" + bcn;
             if (!sessionStorage.getItem(cache)) {
                 rrdata = ut.GetRRData("Buscomp", bcn);
@@ -319,7 +324,7 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
                 bcd = ut.GetBCData(bcn);
                 fm = bc.GetFieldMap();
                 tp = ut.GetAppletType(pm);
-                //Form Applet treatment
+
                 if (tp == "form" || tp == "list") {
                     cs = pm.Get("GetControls");
                     for (c in cs) {
