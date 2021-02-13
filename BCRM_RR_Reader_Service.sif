@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <REPOSITORY
    NAME="Siebel Repository"
-   UPDATED="09/04/2019 02:46:47"
+   UPDATED="12/20/2020 06:24:25"
    UPDATED_BY="SADMIN"
-   CREATED="09/04/2019 02:04:45"
+   CREATED="12/20/2020 06:09:53"
    CREATED_BY="SADMIN"
    FIO_PLACEHOLDER_FIO="TRUE">
 	<PROJECT
@@ -28,9 +28,9 @@
 		   SERVER_ENABLED="N"
 		   STATE_MANAGEMENT_TYPE="Stateful"
 		   WEB_SERVICE_ENABLED="N"
-		   UPDATED="12/31/2020 08:04:10"
+		   UPDATED="12/31/2020 09:37:54"
 		   UPDATED_BY="SADMIN"
-		   CREATED="12/31/2020 08:04:10"
+		   CREATED="12/31/2020 09:37:54"
 		   CREATED_BY="SADMIN">
 			<BUSINESS_SERVICE_LOCALE
 			   APPLICATION_CODE="STD"
@@ -39,9 +39,9 @@
 			   LANGUAGE_CODE="ENU"
 			   NAME="ENU-STD"
 			   TRANSLATE="Y"
-			   UPDATED="12/31/2020 08:04:15"
+			   UPDATED="12/31/2020 09:38:01"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 08:04:15"
+			   CREATED="12/31/2020 09:38:01"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_LOCALE>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -51,9 +51,9 @@
 			   SCRIPT="//Your public declarations go here...  
 "
 			   SEQUENCE="1"
-			   UPDATED="12/31/2020 08:04:15"
+			   UPDATED="12/31/2020 09:38:00"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 08:04:15"
+			   CREATED="12/31/2020 09:38:00"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -86,9 +86,36 @@
     return tt;
 }"
 			   SEQUENCE="2"
-			   UPDATED="01/01/2021 08:29:00"
+			   UPDATED="02/13/2021 01:54:36"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 08:04:15"
+			   CREATED="12/31/2020 09:38:00"
+			   CREATED_BY="SADMIN">
+			</BUSINESS_SERVICE_SERVER_SCRIPT>
+			<BUSINESS_SERVICE_SERVER_SCRIPT
+			   INACTIVE="N"
+			   NAME="GetRRBC"
+			   PROGRAM_LANGUAGE="JS"
+			   SCRIPT="function GetRRBC (Inputs,Outputs)
+{
+    var bcname = Inputs.GetProperty(&quot;Business Component&quot;);
+    var fieldname = Inputs.GetProperty(&quot;Field&quot;);
+    var sv = TheApplication().GetService(&quot;EAI Siebel Adapter&quot;);
+    var ips = TheApplication().NewPropertySet();
+    //var ops = TheApplication().NewPropertySet();
+    var ssp = &quot;&quot;;
+    ips.SetProperty(&quot;OutputIntObjectName&quot;,&quot;Base BCRM RR&quot;);
+    ssp = &quot;[BCRM RR BusComp.Name]=\&quot;&quot; + bcname + &quot;\&quot;&quot;;
+    if (fieldname != &quot;&quot;){
+        ssp += &quot; AND [BCRM RR Field.Name]=\&quot;&quot; + fieldname + &quot;\&quot;&quot;;
+    }
+    ips.SetProperty(&quot;SearchSpec&quot;,ssp);
+    sv.InvokeMethod(&quot;Query&quot;,ips,Outputs);
+
+}"
+			   SEQUENCE="4"
+			   UPDATED="02/13/2021 01:54:37"
+			   UPDATED_BY="SADMIN"
+			   CREATED="02/13/2021 01:54:37"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -145,10 +172,10 @@
         TheApplication().RaiseErrorText(&quot;Error in GetRRData: &quot; + e.toString());
     }
 }"
-			   SEQUENCE="4"
-			   UPDATED="01/01/2021 08:29:00"
+			   SEQUENCE="5"
+			   UPDATED="02/13/2021 01:54:36"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 08:04:15"
+			   CREATED="12/31/2020 09:38:00"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -180,12 +207,11 @@
         TheApplication().RaiseErrorText(&quot;Error in GetRawRRData: &quot; + e.toString());
     }
     return psOut;
-}
-"
+}"
 			   SEQUENCE="3"
-			   UPDATED="01/01/2021 10:23:12"
+			   UPDATED="02/13/2021 01:54:36"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 08:04:15"
+			   CREATED="12/31/2020 09:38:00"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -235,10 +261,10 @@
         TheApplication().RaiseErrorText(&quot;Error in GetTypeRRFieldMap: &quot; + e.toString());
     }
 }"
-			   SEQUENCE="5"
-			   UPDATED="01/01/2021 08:29:00"
+			   SEQUENCE="6"
+			   UPDATED="02/13/2021 01:54:36"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 08:04:15"
+			   CREATED="12/31/2020 09:38:00"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -251,6 +277,8 @@
 		switch(MethodName){
 			case &quot;GetRRData&quot;: GetRRData(Inputs,Outputs);
 							  break;
+			case &quot;GetRRBC&quot;: GetRRBC(Inputs,Outputs);
+							  break;
 			default			: break;
 		}
 	}
@@ -259,10 +287,10 @@
 	}
 	return (CancelOperation);
 }"
-			   SEQUENCE="7"
-			   UPDATED="12/31/2020 08:04:15"
+			   SEQUENCE="8"
+			   UPDATED="02/13/2021 01:54:36"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 08:04:15"
+			   CREATED="12/31/2020 09:38:00"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -308,10 +336,10 @@
     }
     return psAttr;
 }"
-			   SEQUENCE="6"
-			   UPDATED="01/01/2021 08:29:00"
+			   SEQUENCE="7"
+			   UPDATED="02/13/2021 01:54:36"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 08:04:15"
+			   CREATED="12/31/2020 09:38:00"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 		</BUSINESS_SERVICE>
