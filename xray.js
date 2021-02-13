@@ -4,7 +4,8 @@
 //re-visiting the applet x-ray in Siebel 20/21
 //Alexander Hansal, blacksheep IT consulting
 /*
-2020-01-03: fixed GetEl issue
+2021-01-03: fixed GetEl issue
+2021-02-13: merged with devpops
 */
 
 //we use postload, which is primitive but this is just a demo, so get over it... (talking to myself)
@@ -15,10 +16,8 @@ BCRMPostload = function () {
         var ut = new SiebelAppFacade.BCRMUtils();
         //main loop, all applets
         for (a in am) {
-
             //xray handler
             ut.AddXrayHandler(a);
-
         }
     }
     catch (e) {
@@ -28,9 +27,8 @@ BCRMPostload = function () {
 SiebelApp.EventManager.addListner("postload", BCRMPostload, this);
 //end of postload declaration
 
-
 //everything below this line should go into a separate utility file
-
+var BCRCMETACACHE = {};
 if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
     SiebelJS.Namespace("SiebelAppFacade.BCRMUtils");
 
@@ -46,25 +44,32 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
             if (pm) {
                 tp = ut.GetAppletType(pm);
                 if (tp == "form" || tp == "list") {
-                    ae = ut.GetAppletElem(pm);
-                    ae.dblclick(function () //jQuery double-click event handler
-                    {
-                        var cycle; //the toggle cycle
-                        switch (pm.Get("C_ToggleCycle")) {
-                            case "ShowBCFields": cycle = "ShowTableColumns";
-                                break;
-                            case "ShowTableColumns": cycle = "Reset";
-                                break;
-                            case "Reset": cycle = "ShowBCFields";
-                                break;
-                            default: cycle = "ShowBCFields";
-                                break;
-                        }
-                        pm.SetProperty("C_ToggleCycle", cycle); //set property to current cycle
-                        ut.ToggleLabels(cycle, pm); //call utility method
-                        //console.log(cycle);
-                    });
+                    if (pm.Get("BCRM_XRAY_HANDLER_ENABLED") != "true") {
+                        ae = ut.GetAppletElem(pm);
+                        ae.dblclick(function () //jQuery double-click event handler
+                        {
+                            var cycle; //the toggle cycle
+                            switch (pm.Get("C_ToggleCycle")) {
+                                case "ShowControls": cycle = "ShowBCFields";
+                                    break;
+                                case "ShowBCFields": cycle = "ShowTableColumns";
+                                    break;
+                                case "ShowTableColumns": cycle = "Reset";
+                                    break;
+                                case "Reset": cycle = "ShowControls";
+                                    break;
+                                default: cycle = "ShowControls";
+                                    break;
+                            }
+                            pm.SetProperty("C_ToggleCycle", cycle); //set property to current cycle
+                            ut.ToggleLabels(cycle, pm); //call utility method
+                            //console.log(cycle);
+                        });
+                        //console.log("BCRM XRay double-click handler enabled on: " + pm.GetObjName());
+                        pm.SetProperty("BCRM_XRAY_HANDLER_ENABLED", "true");
+                    }
                 }
+
             }
         };
 
@@ -75,6 +80,8 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
             if (pm) {
                 switch (cycle) //determine current toggle cycle and spawn functions
                 {
+                    case "ShowControls": ut.ShowControls(pm);
+                        break;
                     case "ShowBCFields": ut.ShowBCFields(pm);
                         break;
                     //only simple physical metatdata as of yet,
@@ -118,7 +125,8 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
             if (pm) {
                 le = ut.GetLabelElem(c, pm);
                 if (le) {
-                    le.text(nl);
+                    le.html(nl);
+                    le.attr("title", nl);
                     //mark label as changed
                     le.attr("bcrm-custom-label", "true");
                 }
@@ -130,17 +138,18 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
             var ut = new SiebelAppFacade.BCRMUtils();
             var pm = ut.ValidateContext(context);
             var tp;
-            var pr, ce, li, ae, inpname, gh, ph, ch, cm, fn, cn;
+            var pr, ce, li, ae, inpname, gh, ph, ch, cm, fn, cn, uit;
             var thelabel;
             var retval = null;
             if (pm) {
                 tp = ut.GetAppletType(pm);
                 pr = pm.GetRenderer();
                 ae = ut.GetAppletElem(pm);
+                uit = c.GetUIType();
+                inpname = c.GetInputName();
                 if (tp == "form" && pr.GetUIWrapper(c)) {
                     //get control element
                     ce = pr.GetUIWrapper(c).GetEl();
-                    inpname = c.GetInputName();
                     //first attempt: get by label id
                     li = $(ce).attr("aria-labelledby");
 
@@ -168,6 +177,10 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
                         thelabel = ae.find("[bcrm-label-for='" + li + "']");
                     }
 
+                    if (uit == "Button") {
+                        thelabel = ae.find("[name='" + inpname + "']");
+                    }
+
                     //check if label has been found
                     if (thelabel.length == 1) {
                         //tag the label
@@ -175,21 +188,31 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
                         retval = thelabel;
                     }
                 }
-                if (tp == "list") {
-                    gh = ae.find("table.ui-jqgrid-htable");
-                    ph = pm.Get("GetPlaceholder");
-                    ch = pr.GetColumnHelper();
-                    cm = ch.GetColMap();
-                    fn = c.GetName();
-                    for (col in cm) {
-                        if (cm[col] == fn) {
-                            cn = col;
+                if (tp == "list" && typeof (c) !== "undefined") {
+                    try {
+                        gh = ae.find("table.ui-jqgrid-htable");
+                        ph = pm.Get("GetPlaceholder");
+                        ch = pr.GetColumnHelper();
+                        cm = ch.GetColMap();
+                        fn = c.GetName();
+                        for (col in cm) {
+                            if (cm[col] == fn) {
+                                cn = col;
+                            }
+                        }
+                        li = "div#jqgh_" + ph + "_" + cn;
+                        thelabel = gh.find(li);
+
+                        if (uit == "Button") {
+                            thelabel = ae.find("[name='" + inpname + "']");
+                        }
+
+                        if (thelabel.length == 1) {
+                            retval = thelabel;
                         }
                     }
-                    li = "div#jqgh_" + ph + "_" + cn;
-                    thelabel = gh.find(li);
-                    if (thelabel.length == 1) {
-                        retval = thelabel;
+                    catch (e) {
+                        console.log("Error in GetLabelElem for applet: " + pm.GetObjName() + " : " + e.toString());
                     }
                 }
                 return retval;
@@ -290,22 +313,153 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
             return retval;
         };
 
+        //experimental extraction of "SRF" metadata cache, including NEOs
+        //currently limited to BC and Field data
+        //requires Base BCRM RR Integration Object and underlying BO/BCs (see sif files on github)
+        BCRMUtils.prototype.GetNEOData = function (bc, field) {
+            var sv = SiebelApp.S_App.GetService("BCRM RR Reader");
+            var ips = SiebelApp.S_App.NewPropertySet();
+            var ops = SiebelApp.S_App.NewPropertySet();
+            var retval = {};
+            ips.SetProperty("Business Component", bc);
+            if (typeof (field) !== "undefined") {
+                ips.SetProperty("Field", field);
+            }
+            ops = sv.InvokeMethod("GetRRBC", ips);
+            var listofBC = ops.GetChildByType("ResultSet").GetChildByType("SiebelMessage").GetChild(0);
+
+            //only first BC
+            var thebc = listofBC.GetChild(0);
+            for (prop in thebc.propArray) {
+                retval[prop] = thebc.propArray[prop];
+            }
+            retval["Fields"] = {};
+            var fields = thebc.GetChild(0);
+            for (var i = 0; i < fields.GetChildCount(); i++) {
+                var field = fields.GetChild(i);
+                retval["Fields"][field.GetProperty("Name")] = {};
+                for (fprop in field.propArray) {
+                    retval["Fields"][field.GetProperty("Name")][fprop] = field.propArray[fprop];
+                }
+            }
+            return retval;
+        };
+
         //wrapper to get "formatted" BC data
-        BCRMUtils.prototype.GetBCData = function(bcn){
+        BCRMUtils.prototype.GetBCData = function (bcn) {
             var ut = new SiebelAppFacade.BCRMUtils();
-            var rrdata,bcdata,bcd;
-            //use session storage as client-side cache to avoid multiple queries for the same object
+            var rrdata, bcdata, bcd;
+            //use variable as client-side cache to avoid multiple queries for the same object
+            //tried sesssionstorage but reaches quota
             var cache = "BCRM_RR_CACHE_BC_" + bcn;
-            if (!sessionStorage.getItem(cache)) {
+            if (typeof (BCRCMETACACHE[cache]) === "undefined") {
                 rrdata = ut.GetRRData("Buscomp", bcn);
                 bcdata = ut.ExtractBCData(rrdata);
                 bcd = bcdata["Business Component"];
-                sessionStorage.setItem(cache, JSON.stringify(bcd));
+                BCRCMETACACHE[cache] = JSON.stringify(bcd);
             }
             else {
-                bcd = JSON.parse(sessionStorage.getItem(cache));
+                bcd = JSON.parse(BCRCMETACACHE[cache]);
             }
             return bcd;
+        };
+
+        BCRMUtils.prototype.ExtractAppletData = function (rrdata) {
+            var retval = {};
+            var ap;
+            var props;
+            var pc;
+            var cc;
+            var fn;
+            retval["Applet"] = {};
+            ap = retval["Applet"];
+            props = rrdata.GetChild(0).GetChildByType("Properties").propArray;
+            pc = props.length;
+            for (p in props) {
+                ap[p] = props[p];
+            }
+            ap["Controls"] = {};
+            cc = rrdata.GetChild(0).childArray;
+            for (c in cc) {
+                if (cc[c].type == "Control") {
+                    props = cc[c].GetChildByType("Properties").propArray;
+                    fn = cc[c].GetChildByType("Properties").propArray["Name"];
+                    ap["Controls"][fn] = {};
+                    for (p in props) {
+                        ap["Controls"][fn][p] = props[p];
+                    }
+                }
+            }
+            return retval;
+        };
+
+        BCRMUtils.prototype.GetAppletData = function (an) {
+            var ut = new SiebelAppFacade.BCRMUtils();
+            var rrdata, appletdata, ad;
+            //use variable as client-side cache to avoid multiple queries for the same object
+            //tried sesssionstorage but reaches quota
+            var cache = "BCRM_RR_CACHE_APPLET_" + an;
+            if (typeof (BCRCMETACACHE[cache]) === "undefined") {
+                rrdata = ut.GetRRData("Applet", an);
+                appletdata = ut.ExtractAppletData(rrdata);
+                ad = appletdata["Applet"];
+                BCRCMETACACHE[cache] = JSON.stringify(ad);
+            }
+            else {
+                ad = JSON.parse(BCRCMETACACHE[cache]);
+            }
+            return ad;
+        };
+
+        BCRMUtils.prototype.ShowControls = function (context) {
+            var ut = new SiebelAppFacade.BCRMUtils();
+            var pm = ut.ValidateContext(context);
+            var an, apd, tp, cs, cn, uit, pop;
+            var nl;
+            if (pm) {
+                an = pm.GetObjName();
+                apd = ut.GetAppletData(an);
+                tp = ut.GetAppletType(pm);
+                //currently supporting form applets only
+                if (tp == "form" || tp == "list") {
+                    cs = pm.Get("GetControls");
+                    for (c in cs) {
+                        pop = "";
+                        if (cs.hasOwnProperty(c) && c != "CleanEmptyElements") {
+                            cn = c;
+                            uit = cs[cn].GetUIType();
+                            if (uit == "Mvg") {
+                                if (typeof (apd["Controls"][cn]) !== "undefined") {
+                                    pop = apd["Controls"][cn]["MVG Applet"];
+                                    //get Assoc applet
+                                    var mvgd = ut.GetAppletData(pop);
+                                    var asa = mvgd["Associate Applet"];
+                                    if (asa != "") {
+                                        uit = "Shuttle";
+                                        pop = asa + "<br>" + pop;
+                                    }
+                                }
+                            }
+                            if (uit == "Pick") {
+                                if (typeof (apd["Controls"][cn]) !== "undefined") {
+                                    pop = apd["Controls"][cn]["Pick Applet"];
+                                }
+                            }
+                            if (uit == "Button") {
+                                pop = cs[cn].GetMethodName();
+                            }
+                            else {
+                                //nothing to do as of yet
+                            }
+                            nl = uit + ":" + cn;
+                            if (pop != "") {
+                                nl += "<br>" + pop;
+                            }
+                            ut.SetLabel(cs[cn], nl, pm);
+                        }
+                    }
+                }
+            }
         };
 
         //show physical metadata (table.column), requires BCRM RR Reader service
@@ -329,7 +483,8 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
                     cs = pm.Get("GetControls");
                     for (c in cs) {
                         if (cs.hasOwnProperty(c) && c != "CleanEmptyElements") {
-                            fn = cs[c].GetFieldName();
+                            var cn = c;
+                            fn = cs[cn].GetFieldName();
                             if (fn != "") {
                                 fd = fm[fn];
                                 fdt = fd.GetDataType(); //get the data type (text, bool, etc)
@@ -388,10 +543,24 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
                                 }
                                 //field not found in bcdata
                                 else {
-                                    //display field info from OUI layer
-                                    nl = "System: " + fn + " (" + fdt + "/" + fln + ")" + frq + fcl;
+                                    //try experimental NEO access
+                                    try {
+                                        var neo = ut.GetNEOData(bcn, fn);
+                                        if (typeof (neo["Fields"][fn]) !== "undefined") {
+                                            table = neo["Fields"][fn]["Join"];
+                                            column = neo["Fields"][fn]["Column"];
+                                            nl = table + "." + column;
+                                        }
+                                        else {
+                                            //display field info from OUI layer
+                                            nl = "System: " + fn + " (" + fdt + "/" + fln + ")" + frq + fcl;
+                                        }
+                                    }
+                                    catch(e){
+                                        nl = "System: " + fn + " (" + fdt + "/" + fln + ")" + frq + fcl;
+                                    }
                                 }
-                                ut.SetLabel(cs[c], nl, pm);
+                                ut.SetLabel(cs[cn], nl, pm);
                             }
                         }
                     }
@@ -488,7 +657,7 @@ if (typeof (SiebelAppFacade.BCRMUtils) === "undefined") {
             else {//not of this world...
                 retval = "unknown"
             }
-            console.log("BCRMUtils.GetAppletType: " + an + " is a " + retval);
+            //console.log("BCRMUtils.GetAppletType: " + an + " is a " + retval);
             return retval;
         };
 
