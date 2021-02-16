@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <REPOSITORY
    NAME="Siebel Repository"
-   UPDATED="12/20/2020 06:24:25"
+   UPDATED="09/04/2019 02:46:47"
    UPDATED_BY="SADMIN"
-   CREATED="12/20/2020 06:09:53"
+   CREATED="09/04/2019 02:04:45"
    CREATED_BY="SADMIN"
    FIO_PLACEHOLDER_FIO="TRUE">
 	<PROJECT
@@ -28,9 +28,9 @@
 		   SERVER_ENABLED="N"
 		   STATE_MANAGEMENT_TYPE="Stateful"
 		   WEB_SERVICE_ENABLED="N"
-		   UPDATED="12/31/2020 09:37:54"
+		   UPDATED="01/22/2021 02:46:36"
 		   UPDATED_BY="SADMIN"
-		   CREATED="12/31/2020 09:37:54"
+		   CREATED="01/22/2021 02:46:36"
 		   CREATED_BY="SADMIN">
 			<BUSINESS_SERVICE_LOCALE
 			   APPLICATION_CODE="STD"
@@ -39,9 +39,9 @@
 			   LANGUAGE_CODE="ENU"
 			   NAME="ENU-STD"
 			   TRANSLATE="Y"
-			   UPDATED="12/31/2020 09:38:01"
+			   UPDATED="01/22/2021 02:46:36"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 09:38:01"
+			   CREATED="01/22/2021 02:46:36"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_LOCALE>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -51,9 +51,9 @@
 			   SCRIPT="//Your public declarations go here...  
 "
 			   SEQUENCE="1"
-			   UPDATED="12/31/2020 09:38:00"
+			   UPDATED="01/22/2021 02:46:36"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 09:38:00"
+			   CREATED="01/22/2021 02:46:36"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -86,9 +86,9 @@
     return tt;
 }"
 			   SEQUENCE="2"
-			   UPDATED="02/13/2021 01:54:36"
+			   UPDATED="01/22/2021 02:46:36"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 09:38:00"
+			   CREATED="01/22/2021 02:46:36"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -113,9 +113,9 @@
 
 }"
 			   SEQUENCE="4"
-			   UPDATED="02/13/2021 01:54:37"
+			   UPDATED="02/16/2021 02:09:10"
 			   UPDATED_BY="SADMIN"
-			   CREATED="02/13/2021 01:54:37"
+			   CREATED="02/16/2021 02:09:10"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -127,11 +127,13 @@
         var psCache = TheApplication().NewPropertySet();
         var psIn = TheApplication().NewPropertySet();
         var psOut = TheApplication().NewPropertySet();
-        var psDef, cpsDef;
+        var psDef, cpsDef, c3Def;
         var psAttr = TheApplication().NewPropertySet();
         var cpsAttr = TheApplication().NewPropertySet();
+		var c3Attr = TheApplication().NewPropertySet();
         var cc, i;
         var ccc = 0;
+		var c3 = 0;
         //var raw = TheApplication().NewPropertySet();
         psIn.SetProperty(&quot;Object Type&quot;, Inputs.GetProperty(&quot;Object Type&quot;));
         psIn.SetProperty(&quot;Object Name&quot;, Inputs.GetProperty(&quot;Object Name&quot;));
@@ -158,8 +160,18 @@
                         for (var k = 0; k &lt; ccc; k++) {
                             cpsAttr = TheApplication().NewPropertySet();
                             cpsDef = psDef.GetChild(k);
+							c3 = cpsDef.GetChildCount();
                             cpsAttr = TranslateAttr(cpsDef, psCache);
                             psOut.GetChild(i).GetChild(k).AddChild(cpsAttr);
+							//level 3 children
+							if (c3 &gt; 0) {
+								for (var m = 0; m &lt; c3; m++) {
+									c3Attr = TheApplication().NewPropertySet();
+									c3Def = cpsDef.GetChild(m);
+									c3Attr = TranslateAttr(c3Def, psCache);
+									psOut.GetChild(i).GetChild(k).GetChild(m).AddChild(c3Attr);
+								}
+							}//end level 3 children
                         }
                     }//end level 2 children
                 }
@@ -173,9 +185,9 @@
     }
 }"
 			   SEQUENCE="5"
-			   UPDATED="02/13/2021 01:54:36"
+			   UPDATED="02/16/2021 03:14:06"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 09:38:00"
+			   CREATED="01/22/2021 02:46:36"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -209,9 +221,9 @@
     return psOut;
 }"
 			   SEQUENCE="3"
-			   UPDATED="02/13/2021 01:54:36"
+			   UPDATED="02/16/2021 02:09:10"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 09:38:00"
+			   CREATED="01/22/2021 02:46:36"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -262,9 +274,9 @@
     }
 }"
 			   SEQUENCE="6"
-			   UPDATED="02/13/2021 01:54:36"
+			   UPDATED="02/16/2021 02:09:10"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 09:38:00"
+			   CREATED="01/22/2021 02:46:36"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -288,9 +300,9 @@
 	return (CancelOperation);
 }"
 			   SEQUENCE="8"
-			   UPDATED="02/13/2021 01:54:36"
+			   UPDATED="02/16/2021 02:09:10"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 09:38:00"
+			   CREATED="01/22/2021 02:46:36"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -337,9 +349,9 @@
     return psAttr;
 }"
 			   SEQUENCE="7"
-			   UPDATED="02/13/2021 01:54:36"
+			   UPDATED="02/16/2021 02:09:10"
 			   UPDATED_BY="SADMIN"
-			   CREATED="12/31/2020 09:38:00"
+			   CREATED="01/22/2021 02:46:36"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 		</BUSINESS_SERVICE>
