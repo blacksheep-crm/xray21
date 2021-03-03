@@ -28,9 +28,9 @@
 		   SERVER_ENABLED="N"
 		   STATE_MANAGEMENT_TYPE="Stateful"
 		   WEB_SERVICE_ENABLED="N"
-		   UPDATED="02/16/2021 08:26:41"
+		   UPDATED="03/03/2021 04:57:11"
 		   UPDATED_BY="SADMIN"
-		   CREATED="02/16/2021 08:26:41"
+		   CREATED="03/03/2021 04:55:28"
 		   CREATED_BY="SADMIN">
 			<BUSINESS_SERVICE_LOCALE
 			   APPLICATION_CODE="STD"
@@ -39,9 +39,9 @@
 			   LANGUAGE_CODE="ENU"
 			   NAME="ENU-STD"
 			   TRANSLATE="Y"
-			   UPDATED="02/16/2021 08:26:47"
+			   UPDATED="03/03/2021 04:55:28"
 			   UPDATED_BY="SADMIN"
-			   CREATED="02/16/2021 08:26:47"
+			   CREATED="03/03/2021 04:55:28"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_LOCALE>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -51,9 +51,9 @@
 			   SCRIPT="//Your public declarations go here...  
 "
 			   SEQUENCE="1"
-			   UPDATED="02/16/2021 08:26:47"
+			   UPDATED="03/03/2021 04:55:28"
 			   UPDATED_BY="SADMIN"
-			   CREATED="02/16/2021 08:26:47"
+			   CREATED="03/03/2021 04:55:28"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -73,6 +73,12 @@
             if (tl == 0) {
                 t = &quot;&quot;;
             }
+           //kudos to Henkrik T.
+           else if (ta[i].length &lt; tl) {
+                    ta[i+1] = ta[i] + &quot;*&quot; + ta[i+1];
+                    continue;
+            }
+            //end
             else {
                 t = ta[i].substring(0, tl);
             }
@@ -86,9 +92,9 @@
     return tt;
 }"
 			   SEQUENCE="2"
-			   UPDATED="02/16/2021 08:26:47"
+			   UPDATED="03/03/2021 04:56:45"
 			   UPDATED_BY="SADMIN"
-			   CREATED="02/16/2021 08:26:47"
+			   CREATED="03/03/2021 04:55:28"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -113,9 +119,9 @@
 
 }"
 			   SEQUENCE="4"
-			   UPDATED="02/16/2021 08:26:47"
+			   UPDATED="03/03/2021 04:55:28"
 			   UPDATED_BY="SADMIN"
-			   CREATED="02/16/2021 08:26:47"
+			   CREATED="03/03/2021 04:55:28"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -185,9 +191,9 @@
     }
 }"
 			   SEQUENCE="5"
-			   UPDATED="02/16/2021 08:26:47"
+			   UPDATED="03/03/2021 04:55:28"
 			   UPDATED_BY="SADMIN"
-			   CREATED="02/16/2021 08:26:47"
+			   CREATED="03/03/2021 04:55:28"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -221,9 +227,9 @@
     return psOut;
 }"
 			   SEQUENCE="3"
-			   UPDATED="02/16/2021 08:26:47"
+			   UPDATED="03/03/2021 04:55:28"
 			   UPDATED_BY="SADMIN"
-			   CREATED="02/16/2021 08:26:47"
+			   CREATED="03/03/2021 04:55:28"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -274,9 +280,9 @@
     }
 }"
 			   SEQUENCE="6"
-			   UPDATED="02/16/2021 08:26:47"
+			   UPDATED="03/03/2021 04:55:28"
 			   UPDATED_BY="SADMIN"
-			   CREATED="02/16/2021 08:26:47"
+			   CREATED="03/03/2021 04:55:28"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -300,9 +306,9 @@
 	return (CancelOperation);
 }"
 			   SEQUENCE="8"
-			   UPDATED="02/16/2021 08:26:47"
+			   UPDATED="03/03/2021 04:55:28"
 			   UPDATED_BY="SADMIN"
-			   CREATED="02/16/2021 08:26:47"
+			   CREATED="03/03/2021 04:55:28"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 			<BUSINESS_SERVICE_SERVER_SCRIPT
@@ -351,9 +357,9 @@
     return psAttr;
 }"
 			   SEQUENCE="7"
-			   UPDATED="02/25/2021 01:12:53"
+			   UPDATED="03/03/2021 04:55:28"
 			   UPDATED_BY="SADMIN"
-			   CREATED="02/16/2021 08:26:47"
+			   CREATED="03/03/2021 04:55:28"
 			   CREATED_BY="SADMIN">
 			</BUSINESS_SERVICE_SERVER_SCRIPT>
 		</BUSINESS_SERVICE>
